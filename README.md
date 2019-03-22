@@ -1,2 +1,2 @@
 # watershell-cpp
-Port of "watershell" made by an alumni (wumb0) that I decided to port to C++
+Port of [watershell](https://github.com/wumb0/watershell) made by an alumni [wumb0](https://github.com/wumb0) that I decided to rewrite in C++ :)
