@@ -26,25 +26,35 @@
 #include <csignal>
 #include <string>
 #include <cstring>
+#include <limits>
+#include <fstream>
+#include <regex>
+#include <sstream>
+
+
 
 
 class Watershell {
 public:
+  char iface[100];
+  std::string gateway_mac;
   Watershell(int port);
   Watershell(int port, bool DEBUG);
   Watershell(int port, bool DEBUG, bool PROMISC);
   int RunOnce(void);
+  void Init(void);
 
 
 private:
-  char iface[100];
   bool DEBUG, PROMISC;
   int port, sockfd;
   struct ifreq *sifreq;
   struct sock_fprog filter;
 
+  void SetGatewayMAC(void);
+  std::string GetMacFromIP(char *ip_addr);
   void GetInterfaceName(char iface[]);
-  void SendReply(unsigned char *buf, unsigned char *payload);
+  void SendReply(unsigned char *buf, const char *payload);
   // void Sigint(int signum);
   void CalcIPChecksum(struct iphdr *ip);
 };

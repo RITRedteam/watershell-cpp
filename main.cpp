@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
   char buf[2048];
   unsigned char *read;
 
-  while ((arg = getopt(argc, argv, "phi:l:")) != -1){
+  while ((arg = getopt(argc, argv, "ph:l:")) != -1){
     switch (arg){
         case 'p':
             if (DEBUG)
@@ -39,6 +39,8 @@ int main(int argc, char *argv[]) {
     }
   }
   Watershell wtrshl(port, DEBUG, PROMISC);
+  wtrshl.Init();
+  std::cout << wtrshl.gateway_mac << std::endl;
   while(true){
     wtrshl.RunOnce();
   }
