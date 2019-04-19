@@ -3,5 +3,5 @@ Port of [watershell](https://github.com/wumb0/watershell) made by an alumni [wum
 
 ## Setup
 ```
-g++ main.c watershell.c -o ${INSERT_BINARY_NAME}
+g++ main.cpp watershell.cpp -o ${INSERT_BINARY_NAME}
 ```
