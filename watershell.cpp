@@ -105,7 +105,7 @@ int Watershell::RunOnce() {
 
   //checkup on the service, make sure it is still there
   if(!std::strncmp(udpdata, "status:", 7)){
-    this->SendReply(buf, (unsigned char *)"up");
+    this->SendReply(buf, "up");
   }
 
   //run a command if the data is prefixed with run:
