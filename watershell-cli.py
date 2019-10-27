@@ -4,6 +4,8 @@
 Watershell client; a script to easily send commands over UDP to a host running
 the watershell listening binary. The watershell will be listening for UDP data
 on a lower level of the network stack to bypass userspace firewall rules.
+
+Major update provided by Burrch3s
 """
 
 import argparse
