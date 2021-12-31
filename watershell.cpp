@@ -5,12 +5,14 @@ Watershell::Watershell(int port) {
   Watershell(port, false);
 }
 Watershell::Watershell(int port, bool DEBUG) {
-  Watershell(port, DEBUG, false);
+  Watershell(port, DEBUG, false, false);
 }
-Watershell::Watershell(int port, bool DEBUG, bool PROMISC) {
+
+Watershell::Watershell(int port, bool DEBUG, bool PROMISC, bool TCP_MODE) {
   this->port = port;
   this->DEBUG = DEBUG;
   this->PROMISC = PROMISC;
+  this->TCP_MODE = TCP_MODE;
 
   memset(this->iface, '\0', sizeof(this->iface));
   this->GetInterfaceName(this->iface);

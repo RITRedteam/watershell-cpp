@@ -40,13 +40,13 @@ public:
   std::string gateway_mac;
   Watershell(int port);
   Watershell(int port, bool DEBUG);
-  Watershell(int port, bool DEBUG, bool PROMISC);
+  Watershell(int port, bool DEBUG, bool PROMISC, bool TCP_MODE);
   int RunOnce(void);
   void Init(void);
 
 
 private:
-  bool DEBUG, PROMISC;
+  bool DEBUG, PROMISC, TCP_MODE;
   int port, sockfd;
   struct ifreq *sifreq;
   struct sock_fprog filter;
