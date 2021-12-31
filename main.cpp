@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
             return 0;
             break;
         case 'l':
-            std::cout << optarg << std::endl;
             port = strtoul(optarg, NULL, 10);
             if (port <= 0 || port > 65535){
                 if (DEBUG)
