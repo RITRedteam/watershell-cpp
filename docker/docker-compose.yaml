@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  target:
+    build:
+      context: ../
+      dockerfile: "./docker/target.Dockerfile"
+  attacker:
+    build:
+      context: ../
+      dockerfile: "./docker/attacker.Dockerfile"
+    command: /bin/sh -c "while true; do sleep 1; done"

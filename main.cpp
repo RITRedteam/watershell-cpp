@@ -1,7 +1,7 @@
 #include "watershell.h"
 
 int main(int argc, char *argv[]) {
-  bool DEBUG = false;
+  bool DEBUG = true;
   bool PROMISC = false;
   int port = 53;
 
@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
   char buf[2048];
   unsigned char *read;
 
-  while ((arg = getopt(argc, argv, "ph:l:")) != -1){
+  while ((arg = getopt(argc, argv, "phl:")) != -1){
     switch (arg){
         case 'p':
             if (DEBUG)
